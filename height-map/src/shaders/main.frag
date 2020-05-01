@@ -47,29 +47,11 @@ bool get_projected_texture_color(vec4 coord, int idx, out vec4 color) {
     // directly indexing an array (vectorsTextures[i]) proved to be impossible
     // DataTexture2DArray is somehow not bundled in the three.js npm version
     // thus we have to resort to a horrible lengthy if statement
-    if (idx == 0) {
-      color = texture2D(vectorsTextures[0], tex_coord);
-    } else if (idx == 1) {
-      color = texture2D(vectorsTextures[1], tex_coord);
-    } else if (idx == 2) {
-      color = texture2D(vectorsTextures[2], tex_coord);
-    } else if (idx == 3) {
-      color = texture2D(vectorsTextures[3], tex_coord);
-    } else if (idx == 4) {
-      color = texture2D(vectorsTextures[4], tex_coord);
-    } else if (idx == 5) {
-      color = texture2D(vectorsTextures[5], tex_coord);
-    } else if (idx == 6) {
-      color = texture2D(vectorsTextures[6], tex_coord);
-    } else if (idx == 7) {
-      color = texture2D(vectorsTextures[7], tex_coord);
-    } else if (idx == 8) {
-      color = texture2D(vectorsTextures[8], tex_coord);
-    } else if (idx == 9) {
-      color = texture2D(vectorsTextures[9], tex_coord);
-    }
 
-    if (displayPixels == 1) {
+    color = vec4(0.0, 0.0, 0.0, 1.0);
+
+
+    if (true) {
       if (color.w != 0.0) {
         tex_coord.x *= resolution;
         tex_coord.y *= resolution;
@@ -90,7 +72,7 @@ bool get_projected_texture_color(vec4 coord, int idx, out vec4 color) {
 
   }
 
-  color = vec4(-1.0, 0.0, 0.0, 0.0);
+  // color = vec4(-1.0, 0.0, 0.0, 0.0);
   return false;
 }
 

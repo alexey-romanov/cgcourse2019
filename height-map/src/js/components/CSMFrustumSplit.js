@@ -99,13 +99,20 @@ export function getLightSpacePerspectiveCamera(camera) {
     let frustumCorners = calculateCameraFrustumCorners(camera);
     let boundingBox = calculateBoundingBox(frustumCorners);
 
+    let center = new THREE.Vector3();
+    for (let i = 0; i < frustumCorners.length; i++) {
+        center.add(frustumCorners[i])
+    }
+    center.divideScalar(frustumCorners.length);
+
     let points = frustumCorners.map(it => it.clone().sub(camera.position));
 
-    let bboxCenter = new THREE.Vector3(
-        (boundingBox.minX + boundingBox.maxX) / 2,
-        (boundingBox.minY + boundingBox.maxY) / 2,
-        (boundingBox.minZ + boundingBox.maxZ) / 2
-    )
+
+    // let bboxCenter = new THREE.Vector3(
+    //     (boundingBox.minX + boundingBox.maxX) / 2,
+    //     (boundingBox.minY + boundingBox.maxY) / 2,
+    //     (boundingBox.minZ + boundingBox.maxZ) / 2
+    // )
 
     let camDir = new THREE.Vector3();
     camera.getWorldDirection(camDir);
@@ -133,25 +140,52 @@ export function getLightSpacePerspectiveCamera(camera) {
     let sinGamma = Math.sin(camDir.angleTo(new THREE.Vector3(0, -1, 0)))
     let N = (zn + Math.sqrt(zn * zf)) / sinGamma;
 
-    let nearPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(projDir.clone().multiplyScalar(-1), nearestPoint);
-    let farPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(projDir.clone().multiplyScalar(-1), farthestPoint);
+
+    let fakePos = projDir.clone().multiplyScalar(-10000.0);
+
+    let points2 = frustumCorners.map(it => it.clone().sub(fakePos));
+    let nearestPoint2 = null;
+    let farthestPoint2 = null;
+    let zn2 = Number.POSITIVE_INFINITY;
+    let zf2 = Number.NEGATIVE_INFINITY;
+    for (let i = 0; i < points2.length; i++) {
+        let p = points2[i].clone();
+        let dist = p.dot(projDir);
+        if (dist < zn2) {
+            nearestPoint2 = frustumCorners[i];
+            zn2 = dist;
+        }
+        if (dist > zf2) {
+            farthestPoint2 = frustumCorners[i];
+            zf2 = dist;
+        }
+    }
+
+    let nearPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(projDir.clone().multiplyScalar(-1), nearestPoint2);
+    let farPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(projDir.clone().multiplyScalar(-1), farthestPoint2);
+
+
+
     let p0 = new THREE.Vector3();
-    nearPlane.projectPoint(farthestPoint, p0);
+    nearPlane.projectPoint(farthestPoint2, p0);
     let d = Math.abs(farPlane.distanceToPoint(p0));
 
     let F = N + d;
 
-    let centerDistanceToNearPlane = Math.abs(nearPlane.distanceToPoint(bboxCenter));
+    let centerDistanceToNearPlane = Math.abs(nearPlane.distanceToPoint(center));
 
     // it's too far away
-    let newPos = bboxCenter.clone();
+    let newPos =center.clone();
     newPos.sub(projDir.clone().multiplyScalar(centerDistanceToNearPlane));
     newPos.sub(projDir.clone().multiplyScalar(N));
 
+
+
+
     // i know we care about the horizontal fov but consider this: it doesn't work anyway
     const perspectiveCamera = new THREE.PerspectiveCamera(90, 1, N, F);
-    perspectiveCamera.lookAt(projDir);
     perspectiveCamera.position.set(newPos.x, newPos.y, newPos.z);
+    perspectiveCamera.lookAt(newPos.clone().add(projDir));
     perspectiveCamera.updateMatrix();
     perspectiveCamera.updateMatrixWorld(true);
     perspectiveCamera.updateProjectionMatrix();
